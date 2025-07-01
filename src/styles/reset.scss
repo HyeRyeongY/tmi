@@ -1,0 +1,67 @@
+/* styles/_reset.scss */
+
+/* 박스 모델 초기화 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 기본 마진 제거 */
+html,
+body,
+h1, h2, h3, h4, h5, h6,
+p, blockquote, pre,
+figure, dl, dd,
+ul, ol, li,
+fieldset, legend {
+  margin: 0;
+  padding: 0;
+}
+
+/* 리스트 스타일 제거 */
+ul, ol {
+  list-style: none;
+}
+
+/* 링크 초기화 + 포인터 커서 */
+a {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* 버튼 초기화 + 포인터 커서 */
+button {
+  all: unset; // 배경, 보더, 폰트 등 제거
+  cursor: pointer;
+}
+
+/* 이미지 등 미디어 요소 반응형 처리 */
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* 인풋 기본 스타일 제거 (크로스 브라우징 보완용) */
+input, textarea, select {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  outline: none;
+}
+
+/* strong, em 등 기본 강조 태그 스타일 재정의 */
+strong {
+  font-weight: bold;
+}
+em {
+  font-style: italic;
+}
+
+/* 기본 스크롤 위치 */
+html {
+  scroll-behavior: smooth;
+}
