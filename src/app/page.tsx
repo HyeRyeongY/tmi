@@ -3,7 +3,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import styles from "./carousel.module.css";
 
 const images = Array.from({ length: 10 }).map((_, i) => ({
   title: `Image ${i + 1}`,
@@ -12,7 +11,6 @@ const images = Array.from({ length: 10 }).map((_, i) => ({
 
 export default function CarouselPage() {
   const [active, setActive] = useState(0);
-  const [progress, setProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startX = useRef(0);
   const cursorsRef = useRef<NodeListOf<HTMLElement> | null>(null);
@@ -36,7 +34,6 @@ export default function CarouselPage() {
   const animateToIndex = (index: number) => {
     const clamped = Math.max(0, Math.min(index, itemCount - 1));
     setActive(clamped);
-    setProgress(step * clamped);
   };
 
   useEffect(() => {
