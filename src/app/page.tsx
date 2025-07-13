@@ -1,7 +1,7 @@
 // app/carousel/page.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 const images = Array.from({ length: 10 }).map((_, i) => ({
@@ -16,8 +16,6 @@ export default function CarouselPage() {
   const cursorsRef = useRef<NodeListOf<HTMLElement> | null>(null);
   const itemCount = images.length;
 
-  const step = 100 / (itemCount - 1); // 한 이미지당 progress 거리
-
   const getZIndex = (i: number) => (i === active ? itemCount : itemCount - Math.abs(active - i));
 
   const getWaveY = (index: number) => {
@@ -31,10 +29,13 @@ export default function CarouselPage() {
     return Math.sin(offset * Math.PI * (1 / 0.3)) * amplitude;
   };
 
-  const animateToIndex = (index: number) => {
-    const clamped = Math.max(0, Math.min(index, itemCount - 1));
-    setActive(clamped);
-  };
+  const animateToIndex = useCallback(
+    (index: number) => {
+      const clamped = Math.max(0, Math.min(index, itemCount - 1));
+      setActive(clamped);
+    },
+    [itemCount]
+  );
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
@@ -53,7 +54,6 @@ export default function CarouselPage() {
       if (!isDragging) return;
 
       const delta = x - startX.current;
-
       if (Math.abs(delta) > 30) {
         const direction = delta > 0 ? -1 : 1;
         requestAnimationFrame(() => animateToIndex(active + direction));
@@ -88,7 +88,7 @@ export default function CarouselPage() {
       window.removeEventListener("touchmove", handleMove);
       window.removeEventListener("touchend", handleUp);
     };
-  }, [active, isDragging]);
+  }, [active, isDragging, animateToIndex]);
 
   const handleItemClick = (i: number) => {
     animateToIndex(i);
