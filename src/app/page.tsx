@@ -95,7 +95,7 @@ export default function CarouselPage() {
   };
 
   return (
-    <div className="carousel">
+    <div className="timeline">
       {images.map((img, i) => (
         <div
           key={i}

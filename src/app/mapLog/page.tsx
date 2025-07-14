@@ -1,4 +1,42 @@
-export default function mapLog() {
+"use client";
+
+import { useEffect } from "react";
+
+export default function DotMap() {
+  useEffect(() => {
+    const activeDots = [
+      { cx: 805.8, cy: 110.3, id: "korea-seoul" },
+      { cx: 819.3, cy: 117.1, id: "china-beijing" },
+    ];
+
+    const circles = document.querySelectorAll<SVGCircleElement>(".map svg circle");
+
+    circles.forEach((circle) => {
+      const cx = parseFloat(circle.getAttribute("cx") || "");
+      const cy = parseFloat(circle.getAttribute("cy") || "");
+
+      const match = activeDots.find((dot) => dot.cx === cx && dot.cy === cy);
+
+      if (match) {
+        circle.classList.add("active");
+        circle.setAttribute("id", match.id); // ✅ 여기서 id 부여
+      }
+
+      circle.addEventListener("mouseenter", () => {
+        circle.classList.add("hovered");
+      });
+
+      circle.addEventListener("mouseleave", () => {
+        circle.classList.remove("hovered");
+      });
+
+      circle.addEventListener("click", () => {
+        const id = circle.getAttribute("id");
+        alert(`Clicked ${id ?? `circle at (${cx}, ${cy})`}`);
+      });
+    });
+  }, []);
+
   return (
     <div className="map">
       <svg viewBox="0 0 845.2 458">
