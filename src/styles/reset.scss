@@ -65,3 +65,16 @@ em {
 html {
   scroll-behavior: smooth;
 }
+
+/* 해상도별 폰트 사이즈 정의 */
+/* 10px = 1rem 기준으로 동작 */
+html{letter-spacing:0; line-height:1; font-size:10px;} 
+
+@media(max-width:1600px){html{font-size:9.75px;}}
+@media(max-width:1400px){html{font-size:9.5px;}}
+@media(max-width:1280px){html{font-size:9.25px;}}
+@media(max-width:1024px){html{font-size:9px;}}
+@media(max-width:768px){html{font-size:8.75px;}}
+@media(max-width:640px){html{font-size:8.5px;}}
+@media(max-width:400px){html{font-size:8.25px;}}
+@media(max-width:320px){html{font-size:8px;}}
