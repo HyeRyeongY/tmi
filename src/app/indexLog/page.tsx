@@ -9,9 +9,9 @@ export default function Page() {
   const [tooltipText, setTooltipText] = useState("");
 
   useEffect(() => {
-    let GSAP: any;
-    let Draggable: any;
-    const instances: any[] = [];
+    let GSAP: typeof import("gsap").gsap | undefined;
+    let Draggable: typeof import("gsap/Draggable").Draggable | undefined;
+    const instances: unknown[] = [];
     const removeListeners: Array<() => void> = [];
 
     // 스크롤 잠금
@@ -19,7 +19,7 @@ export default function Page() {
     document.body.style.overflow = "hidden";
 
     const isDraggingRef = { current: false };
-    const hideTimerRef = { current: 0 as any }; // number | null
+    const hideTimerRef = { current: 0 as number | NodeJS.Timeout };
     const TOOLTIP_OFFSET_X = 15;
     const TOOLTIP_FADE = 0.15;
     const HIDE_DELAY = 180; // ms
@@ -27,14 +27,14 @@ export default function Page() {
     const clearHideTimer = () => {
       if (hideTimerRef.current) {
         clearTimeout(hideTimerRef.current);
-        hideTimerRef.current = 0 as any;
+        hideTimerRef.current = 0;
       }
     };
 
     const showTooltipNow = (e: PointerEvent) => {
       if (!tooltipRef.current || !GSAP) return;
       tooltipRef.current.style.visibility = "visible";
-      GSAP.to(tooltipRef.current, { opacity: 1, duration: TOOLTIP_FADE });
+      GSAP?.to(tooltipRef.current, { opacity: 1, duration: TOOLTIP_FADE });
       moveTooltip(e);
     };
 
@@ -42,14 +42,14 @@ export default function Page() {
       clearHideTimer();
       hideTimerRef.current = setTimeout(() => {
         if (!tooltipRef.current || !GSAP) return;
-        GSAP.to(tooltipRef.current, {
+        GSAP?.to(tooltipRef.current, {
           opacity: 0,
           duration: TOOLTIP_FADE,
           onComplete: () => {
             if (tooltipRef.current) tooltipRef.current.style.visibility = "hidden";
           },
         });
-      }, HIDE_DELAY) as any;
+      }, HIDE_DELAY);
     };
 
     const moveTooltip = (e: PointerEvent) => {
@@ -68,9 +68,9 @@ export default function Page() {
     (async () => {
       const g = await import("gsap");
       const d = await import("gsap/Draggable");
-      GSAP = g.gsap ?? g.default ?? g;
-      Draggable = d.Draggable ?? d.default ?? d;
-      GSAP.registerPlugin(Draggable);
+      GSAP = (g as unknown as { gsap: typeof import("gsap").gsap }).gsap ?? (g as unknown as { default: typeof import("gsap").gsap }).default ?? (g as typeof import("gsap"));
+      Draggable = (d as unknown as { Draggable: typeof import("gsap/Draggable").Draggable }).Draggable ?? (d as unknown as { default: typeof import("gsap/Draggable").Draggable }).default ?? (d as typeof import("gsap/Draggable"));
+      GSAP?.registerPlugin(Draggable!);
 
       const root = containerRef.current!;
       if (tooltipRef.current) {
@@ -96,19 +96,19 @@ export default function Page() {
 
       // Draggable
       draggableEls.forEach((el) => {
-        const [inst] = Draggable.create(el, {
+        const [inst] = Draggable!.create(el, {
           type: "x,y",
           bounds: root,
           inertia: true,
           onDragStart: function () {
             isDraggingRef.current = true;
-            GSAP.to(this.target, { opacity: 0.85, duration: 0.2 });
+            GSAP?.to(this.target, { opacity: 0.85, duration: 0.2 });
             clearHideTimer();
             scheduleHide(); // 드래그 시작 시 tooltip 숨김
           },
           onDragEnd: function () {
             isDraggingRef.current = false;
-            GSAP.to(this.target, { opacity: 1, duration: 0.2 });
+            GSAP?.to(this.target, { opacity: 1, duration: 0.2 });
           },
           onPress: function () {
             const parent = (this.target as Element).parentNode;
@@ -153,7 +153,7 @@ export default function Page() {
       document.body.style.overflow = prevOverflow;
       clearHideTimer();
       removeListeners.forEach((fn) => fn());
-      instances.forEach((i) => i?.kill?.());
+      instances.forEach((i) => (i as { kill?: () => void })?.kill?.());
     };
   }, []);
 
