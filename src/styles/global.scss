@@ -6,6 +6,7 @@ body {
 /* layout */
 .info {
   position: fixed;
+  z-index: 10;
   bottom: 4rem;
   left: 4rem;
   display: flex;
@@ -37,6 +38,7 @@ body {
 
 .menu {
   position: fixed;
+  z-index: 10;
   top: 4rem;
   right: 4rem;
   font-size: 2.2rem;
@@ -233,24 +235,55 @@ body {
 
 /* index-page */
 .index-page {
-  position: relative;
-  width: 100%;
-  height: 100vh; // 스크롤 충분히 확보
-  .folder {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    transform: translateX(-50%);
-    z-index: 10;
-    display: inline-block;
-    background-image: url("/images/folder.svg");
-    width: 600px;
-    height: 396px;
-    position: relative;
-    strong {
-      position: absolute;
-      font-size: 2.4rem;
-      padding: 2rem 2.4rem 0;
-    }
+  position: fixed;
+  inset: 0;
+  overflow: hidden; 
+  user-select: none;
+  touch-action: none; /* 모바일 스와이프 스크롤 방지 */
+  
+.folder {
+  position: absolute; /* 초기 좌표 배치 + bounds 제어 */
+  border-radius: 12px;
+  color: #fff;
+  cursor: grab;
+  will-change: transform; /* 드래그 성능 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: url("/images/folder.svg");
+  width: 300px;
+  height: auto;
+  aspect-ratio: 50 / 33;
+
+  &:active {
+    cursor: grabbing;
   }
+  span{
+    position: absolute;
+    font-size: 2rem;
+    padding: 2rem;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+
+  }
+}
+
+.tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none; /* tooltip이 커서에 간섭하지 않도록 */
+  background: rgba(20, 20, 20, 0.9);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.2;
+  z-index: 9999;
+  white-space: nowrap;
+}
+
 }

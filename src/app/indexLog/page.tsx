@@ -1,60 +1,177 @@
+// /app/page.tsx
 "use client";
 
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import ScrollTrigger from "gsap/ScrollTrigger";
+import { useEffect, useRef, useState } from "react";
 
-gsap.registerPlugin(ScrollTrigger);
-
-export default function FolderStage() {
-  const containerRef = useRef<HTMLDivElement>(null);
+export default function Page() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const [tooltipText, setTooltipText] = useState("");
 
   useEffect(() => {
-    const folders = containerRef.current?.querySelectorAll(".folder");
-    if (!folders) return;
+    let GSAP: any;
+    let Draggable: any;
+    const instances: any[] = [];
+    const removeListeners: Array<() => void> = [];
 
-    folders.forEach((el, i) => {
-      const randomX = (Math.random() - 0.5) * 500; // -250~+250px 좌우 랜덤
-      const centerY = window.innerHeight * 0.5;
-      const finalY = window.innerHeight * 0.9 + 300; // 아래쪽 쌓임 + 간격
-      console.log("finalY", finalY);
-      // 초기 위치 설정
-      gsap.set(el, {
-        x: randomX,
-        y: "-100%",
+    // 스크롤 잠금
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const isDraggingRef = { current: false };
+    const hideTimerRef = { current: 0 as any }; // number | null
+    const TOOLTIP_OFFSET_X = 15;
+    const TOOLTIP_FADE = 0.15;
+    const HIDE_DELAY = 180; // ms
+
+    const clearHideTimer = () => {
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = 0 as any;
+      }
+    };
+
+    const showTooltipNow = (e: PointerEvent) => {
+      if (!tooltipRef.current || !GSAP) return;
+      tooltipRef.current.style.visibility = "visible";
+      GSAP.to(tooltipRef.current, { opacity: 1, duration: TOOLTIP_FADE });
+      moveTooltip(e);
+    };
+
+    const scheduleHide = () => {
+      clearHideTimer();
+      hideTimerRef.current = setTimeout(() => {
+        if (!tooltipRef.current || !GSAP) return;
+        GSAP.to(tooltipRef.current, {
+          opacity: 0,
+          duration: TOOLTIP_FADE,
+          onComplete: () => {
+            if (tooltipRef.current) tooltipRef.current.style.visibility = "hidden";
+          },
+        });
+      }, HIDE_DELAY) as any;
+    };
+
+    const moveTooltip = (e: PointerEvent) => {
+      const el = tooltipRef.current;
+      if (!el) return;
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+      el.style.left = `${mouseX + TOOLTIP_OFFSET_X}px`;
+      el.style.top = `${mouseY}px`;
+      const rect = el.getBoundingClientRect();
+      if (rect.right > window.innerWidth) {
+        el.style.left = `${mouseX - rect.width - 10}px`;
+      }
+    };
+
+    (async () => {
+      const g = await import("gsap");
+      const d = await import("gsap/Draggable");
+      GSAP = g.gsap ?? g.default ?? g;
+      Draggable = d.Draggable ?? d.default ?? d;
+      GSAP.registerPlugin(Draggable);
+
+      const root = containerRef.current!;
+      if (tooltipRef.current) {
+        tooltipRef.current.style.visibility = "hidden";
+        tooltipRef.current.style.opacity = "0";
+      }
+
+      const draggableEls = Array.from(
+        root.querySelectorAll<HTMLElement>(".draggable-path")
+      );
+
+      // 초기 랜덤 배치
+      const bounds = root.getBoundingClientRect();
+      draggableEls.forEach((el) => {
+        el.style.position = "absolute";
+        const w = el.offsetWidth || 180;
+        const h = el.offsetHeight || 120;
+        const left = Math.max(0, Math.min(bounds.width - w, Math.random() * (bounds.width - w)));
+        const top = Math.max(0, Math.min(bounds.height - h, Math.random() * (bounds.height - h)));
+        el.style.left = `${left}px`;
+        el.style.top = `${top}px`;
       });
 
-      // 애니메이션: 위 → 중앙 → 아래
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: `top+=${i * 120} top`, // 순차적으로 등장
-          end: `+=100%`,
-          scrub: true,
-          markers: true,
-        },
+      // Draggable
+      draggableEls.forEach((el) => {
+        const [inst] = Draggable.create(el, {
+          type: "x,y",
+          bounds: root,
+          inertia: true,
+          onDragStart: function () {
+            isDraggingRef.current = true;
+            GSAP.to(this.target, { opacity: 0.85, duration: 0.2 });
+            clearHideTimer();
+            scheduleHide(); // 드래그 시작 시 tooltip 숨김
+          },
+          onDragEnd: function () {
+            isDraggingRef.current = false;
+            GSAP.to(this.target, { opacity: 1, duration: 0.2 });
+          },
+          onPress: function () {
+            const parent = (this.target as Element).parentNode;
+            if (parent) parent.appendChild(this.target);
+          },
+        });
+        instances.push(inst);
+
+        // Tooltip 이벤트 (pointer 이벤트로 통일)
+        const onEnter = (e: PointerEvent) => {
+          if (isDraggingRef.current) return;
+          clearHideTimer();
+          setTooltipText(el.dataset.name || "");
+          showTooltipNow(e);
+        };
+        const onLeave = () => {
+          if (isDraggingRef.current) return;
+          scheduleHide();
+        };
+        const onMove = (e: PointerEvent) => {
+          if (isDraggingRef.current) return;
+          clearHideTimer();
+          moveTooltip(e);
+        };
+
+        el.addEventListener("pointerenter", onEnter, { passive: true });
+        el.addEventListener("pointerleave", onLeave, { passive: true });
+        el.addEventListener("pointermove", onMove, { passive: true });
+
+        removeListeners.push(() => {
+          el.removeEventListener("pointerenter", onEnter);
+          el.removeEventListener("pointerleave", onLeave);
+          el.removeEventListener("pointermove", onMove);
+        });
       });
 
-      tl.to(el, {
-        opacity: 1,
-        y: centerY - 100,
-        x: 0,
-        ease: "power2.out",
-      }).to(el, {
-        y: finalY,
-        duration: 1.2,
-        ease: "power1.inOut",
-      });
-    });
+      // 디버그
+      // console.log("Draggable initialized:", draggableEls.length);
+    })();
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      clearHideTimer();
+      removeListeners.forEach((fn) => fn());
+      instances.forEach((i) => i?.kill?.());
+    };
   }, []);
 
   return (
-    <div className="index-page" ref={containerRef}>
+    <div ref={containerRef} className="index-page">
       {[...Array(7)].map((_, i) => (
-        <div className="folder" key={i}>
-          <strong>Folder {i + 1}</strong>
+        <div
+          className="draggable-path folder"
+          key={i}
+          data-name={`Folder ${i + 1}`}
+        >
+          <span>Folder {i + 1}</span>
         </div>
       ))}
+
+      <div ref={tooltipRef} id="tooltip" className="tooltip" aria-hidden>
+        {tooltipText}
+      </div>
     </div>
   );
 }
